@@ -1,0 +1,23 @@
+**/node_modules
+node_modules
+
+**/ .next
+.next
+
+**/dist
+**/build
+
+api/**/generated/prisma
+
+**/.env*
+.env
+
+.git
+.gitignore
+
+**/.DS_Store
+Thumbs.db
+
+.dockerignore
+Dockerfile
+docker-compose.yml

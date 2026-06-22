@@ -1,0 +1,66 @@
+services:
+  boilerplate-fe:
+    privileged: true
+    container_name: boilerplate-fe
+    restart: unless-stopped
+    env_file:
+      - .env
+    build:
+      target: fe-prd
+    environment:
+      - NODE_ENV=production
+    ports:
+      - '3000:3000'
+    volumes:
+      - fe_modules:/usr/boilerplate/fe/node_modules
+    depends_on:
+      boilerplate-api:
+        condition: service_healthy
+
+  boilerplate-api:
+    privileged: true
+    container_name: boilerplate-api
+    restart: unless-stopped
+    env_file:
+      - .env
+    build:
+      target: api-prd
+    environment:
+      - NODE_ENV=production
+    ports:
+      - '8080:8080'
+    volumes:
+      - api_modules:/usr/boilerplate/api/node_modules
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8080/api/v1/ || exit 1"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  postgres:
+    image: postgres:16-alpine
+    container_name: boilerplate-db
+    restart: always
+    environment:
+      POSTGRES_USER: ${PG_USER:-dummy}
+      POSTGRES_PASSWORD: ${PG_PASSWORD:-dummy}
+      POSTGRES_DB: ${PG_DB:-boilerplate}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./entrypoints/init.sql:/docker-entrypoint-initdb.d/init.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${PG_USER:-boilerplate} -d ${PG_DB:-boilerplate}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  fe_modules:
+  api_modules:
+  postgres_data:   

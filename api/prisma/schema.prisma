@@ -1,0 +1,28 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  schemas  = ["boilerplate"]
+}
+
+model User {
+  id        String          @id @default(cuid())
+  email     String          @unique
+  username  String          @unique
+  name      String?
+  role      String?         @default("user")
+  password  String
+  tokenVersion Int          @default(0)
+  refreshTokenVersion Int   @default(0)
+  failed_login_tries Int    @default(0)
+  login_timeout_untill      DateTime?
+  previous_blocks Int       @default(0)
+  last_blocked_at           DateTime?
+  createdAt DateTime        @default(now())
+  updatedAt DateTime        @updatedAt
+
+  @@schema("boilerplate")
+}
