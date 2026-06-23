@@ -103,7 +103,7 @@ auth.get('/me', verifyJWT(), async (c) => {
   const user: AccessTokenPayload = c.get('user');
   const refresh = (user.exp - Math.floor(Date.now() / 1000)) < (10 * 60);
 
-  return c.json({valid: true, refresh}, 200)
+  return c.json({valid: true, role: user.role, refresh}, 200)
 });
 
 auth.post('/refresh', async (c) => {
