@@ -1,6 +1,6 @@
 overrides:
-  "@hono/node-server": "^1.19.13"
-  esbuild: "^0.28"
+  deepmerge-ts: "^8.0.1"
+  esbuild: "^0.28.2"
 
 minimumReleaseAgeExclude:
   - "rollup"

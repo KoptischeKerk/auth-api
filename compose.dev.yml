@@ -1,32 +1,18 @@
 services:
-  boilerplate-fe:
-    restart: unless-stopped
-    environment:
-      - NODE_ENV=development
-    build:
-      target: fe-dev
-    volumes:
-      - ./frontend/public/:/usr/boilerplate/fe/public/:ro
-      - ./frontend/app/:/usr/boilerplate/fe/app/:ro
-      - next_cache:/usr/boilerplate/fe/.next
-    ports:
-      - '3000:3000'
-  boilerplate-api:
+  authentication-api:
     restart: unless-stopped
     environment:
       - NODE_ENV=development
     build:
       target: api-dev
     volumes:
-      - ./api/prisma/schema.prisma:/usr/boilerplate/api/prisma/schema.prisma:ro
-      - ./api/prisma/seed.ts:/usr/boilerplate/api/prisma/seed.ts:ro
-      - ./api/prisma.config.ts:/usr/boilerplate/api/prisma.config.ts:ro
-      - ./api/src/index.ts:/usr/boilerplate/api/src/index.ts:ro
-      - ./api/src/lib:/usr/boilerplate/api/src/lib:ro
-      - ./api/src/utils:/usr/boilerplate/api/src/utils:ro
-      - ./api/src/routes:/usr/boilerplate/api/src/routes:ro
-      - ./api/src/types:/usr/boilerplate/api/src/types:ro
+      - ./api/prisma/schema.prisma:/usr/authentication/api/prisma/schema.prisma:ro
+      - ./api/prisma/seed.ts:/usr/authentication/api/prisma/seed.ts:ro
+      - ./api/prisma.config.ts:/usr/authentication/api/prisma.config.ts:ro
+      - ./api/src/index.ts:/usr/authentication/api/src/index.ts:ro
+      - ./api/src/lib:/usr/authentication/api/src/lib:ro
+      - ./api/src/utils:/usr/authentication/api/src/utils:ro
+      - ./api/src/routes:/usr/authentication/api/src/routes:ro
+      - ./api/src/types:/usr/authentication/api/src/types:ro
     ports:
       - '8080:8080'
-volumes:
-  next_cache:

@@ -1,7 +1,7 @@
 import { Hono } from "hono";
 import { verify, sign } from 'hono/jwt'
 import { prisma } from "@/src/lib/prisma";
-import { 
+import {
   comparePassword,
   verifyInput,
   hashPassword,
@@ -11,17 +11,17 @@ import {
   JWT_REFRESH_SECRET,
   JWT_SECRET
 } from '@/src/utils/core'
-import { type AccessTokenPayload, type AuthUser} from '@/src/types'
+import { type AccessTokenPayload, type AuthUser } from '@/src/types'
+import { type Context } from "hono";
 
 const auth = new Hono();
 
-  /* Production - Login */
-auth.post('/login', verifyInput(['identifier', 'password']), async (c) => {
+/* Production - Login */
+auth.post('/login', verifyInput(['identifier', 'password']), async (c: Context) => {
   const body = await c.req.json();
   const { identifier, password } = body;
   const now = new Date();
 
-  // 1. Find user by username OR email
   const user: AuthUser | null = await prisma.user.findFirst({
     where: {
       OR: [
@@ -35,16 +35,19 @@ auth.post('/login', verifyInput(['identifier', 'password']), async (c) => {
     return c.json({ success: false, message: "Invalid credentials." }, 401);
   }
 
+  if (user.disabled) {
+    return c.json({ success: false, message: "Invalid credentials." }, 403);
+  }
+
   if (user.login_timeout_untill && user.login_timeout_untill > now) {
-    const minutesLeft = Math.ceil((user.login_timeout_untill.getTime() - now.getTime()) / 60000);
-    return c.json({ 
-      success: false, 
-      message: `Account is temporarily locked. Please try again in ${minutesLeft} minutes.` 
+    return c.json({
+      success: false,
+      message: "Invalid credentials.",
     }, 423);
   }
 
   const isPasswordCorrect = await comparePassword(password, (user.password ?? ""));
-;
+  ;
 
   if (isPasswordCorrect) {
     await prisma.user.update({
@@ -64,7 +67,7 @@ auth.post('/login', verifyInput(['identifier', 'password']), async (c) => {
   const newFailedTries = (user.failed_login_tries ?? 0) + 1;
 
   if (newFailedTries >= 5) {
-    const extraMinutes = (user.previous_blocks ?? 0) * 5; 
+    const extraMinutes = (user.previous_blocks ?? 0) * 5;
     const totalCooldownMinutes = 15 + extraMinutes;
     const timeoutDate = new Date(now.getTime() + totalCooldownMinutes * 60 * 1000);
 
@@ -78,9 +81,9 @@ auth.post('/login', verifyInput(['identifier', 'password']), async (c) => {
       },
     });
 
-    return c.json({ 
-      success: false, 
-      message: `Too many failed attempts. Account locked for ${totalCooldownMinutes} minutes.` 
+    return c.json({
+      success: false,
+      message: "Invalid credentials.",
     }, 429);
 
   } else {
@@ -91,22 +94,22 @@ auth.post('/login', verifyInput(['identifier', 'password']), async (c) => {
       },
     });
 
-    return c.json({ 
-      success: false, 
-      message: `Incorrect password. You have ${5 - newFailedTries} attempts remaining.` 
+    return c.json({
+      success: false,
+      message: "Invalid credentials.",
     }, 401);
   }
 });
 
-auth.get('/me', verifyJWT(), async (c) => {
+auth.get('/me', verifyJWT(), async (c: Context) => {
   // @ts-ignore
   const user: AccessTokenPayload = c.get('user');
   const refresh = (user.exp - Math.floor(Date.now() / 1000)) < (10 * 60);
 
-  return c.json({valid: true, role: user.role, refresh}, 200)
+  return c.json({ valid: true, role: user.role, refresh }, 200)
 });
 
-auth.post('/refresh', async (c) => {
+auth.post('/refresh', async (c: Context) => {
   const body = await c.req.json().catch(() => ({}));
   const { refreshToken } = body;
 
@@ -117,7 +120,7 @@ auth.post('/refresh', async (c) => {
   try {
     const decoded = await verify(refreshToken, JWT_REFRESH_SECRET, 'HS256');
 
-    let user: AuthUser | null = await prisma.user.findUnique({
+    let user: AuthUser = await prisma.user.findUnique({
       where: { id: decoded.sub as string }
     });
 
@@ -141,7 +144,7 @@ auth.post('/refresh', async (c) => {
 
       const newRefreshToken = await sign({
         sub: user.id,
-        refreshTokenVersion: user.refreshTokenVersion, 
+        refreshTokenVersion: user.refreshTokenVersion,
         exp: Math.floor(Date.now() / 1000) + (60 * 60 * 24 * 7)
       }, JWT_REFRESH_SECRET, 'HS256');
 
@@ -174,7 +177,7 @@ auth.post('/refresh', async (c) => {
   }
 });
 
-auth.post('/register', verifyInput(['username', 'email', 'password', 'name']), async (c) => {
+auth.post('/register', verifyInput(['username', 'email', 'password', 'name']), async (c: Context) => {
   try {
     const body = await c.req.json();
     const { username, email, password, name } = body;
@@ -214,7 +217,6 @@ auth.post('/register', verifyInput(['username', 'email', 'password', 'name']), a
     return c.json({ success: true, token, refreshToken }, 201);
 
   } catch (error) {
-    console.error("Registration error:", error);
     return c.json({ success: false, message: "An error occurred during registration." }, 500);
   }
 });

@@ -1,4 +1,4 @@
-# Boilerplate Authentication API Documentation
+# 🍳 authentication Authentication API Documentation
 
 This base repository contains a rock-solid, production-ready authentication loop built with Hono, Prisma, and TypeScript. It features case-insensitive user lookups, global JWT middleware verification, and an automated Fort Knox brute-force protection system with scaling lockouts.
 

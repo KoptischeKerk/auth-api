@@ -1,25 +1,7 @@
 services:
-  boilerplate-fe:
+  authentication-api:
     privileged: true
-    container_name: boilerplate-fe
-    restart: unless-stopped
-    env_file:
-      - .env
-    build:
-      target: fe-prd
-    environment:
-      - NODE_ENV=production
-    ports:
-      - '3000:3000'
-    volumes:
-      - fe_modules:/usr/boilerplate/fe/node_modules
-    depends_on:
-      boilerplate-api:
-        condition: service_healthy
-
-  boilerplate-api:
-    privileged: true
-    container_name: boilerplate-api
+    container_name: authentication-api
     restart: unless-stopped
     env_file:
       - .env
@@ -30,9 +12,9 @@ services:
     ports:
       - '8080:8080'
     volumes:
-      - api_modules:/usr/boilerplate/api/node_modules
+      - api_modules:/usr/authentication/api/node_modules
     depends_on:
-      postgres:
+      authentication-postgres:
         condition: service_healthy
     healthcheck:
       test: ["CMD-SHELL", "curl -f http://localhost:8080/api/v1/ || exit 1"]
@@ -41,26 +23,25 @@ services:
       retries: 5
       start_period: 10s
 
-  postgres:
+  authentication-postgres:
     image: postgres:16-alpine
-    container_name: boilerplate-db
+    container_name: authentication-db
     restart: always
     environment:
       POSTGRES_USER: ${PG_USER:-dummy}
       POSTGRES_PASSWORD: ${PG_PASSWORD:-dummy}
-      POSTGRES_DB: ${PG_DB:-boilerplate}
+      POSTGRES_DB: ${PG_DB:-authentication}
     ports:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
       - ./entrypoints/init.sql:/docker-entrypoint-initdb.d/init.sql
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${PG_USER:-boilerplate} -d ${PG_DB:-boilerplate}"]
+      test: ["CMD-SHELL", "pg_isready -U ${PG_USER:-authentication} -d ${PG_DB:-authentication}"]
       interval: 5s
       timeout: 5s
       retries: 5
 
 volumes:
-  fe_modules:
   api_modules:
-  postgres_data:   
+  postgres_data:

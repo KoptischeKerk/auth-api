@@ -5,7 +5,7 @@ generator client {
 
 datasource db {
   provider = "postgresql"
-  schemas  = ["boilerplate"]
+  schemas  = ["authentication"]
 }
 
 model User {
@@ -13,6 +13,7 @@ model User {
   email     String          @unique
   username  String          @unique
   name      String?
+  disabled  Boolean         @default(false)
   role      String?         @default("user")
   password  String
   tokenVersion Int          @default(0)
@@ -24,5 +25,5 @@ model User {
   createdAt DateTime        @default(now())
   updatedAt DateTime        @updatedAt
 
-  @@schema("boilerplate")
+  @@schema("authentication")
 }

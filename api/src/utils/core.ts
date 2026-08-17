@@ -2,6 +2,7 @@ import bcrypt from 'bcrypt';
 import { sign, verify } from 'hono/jwt'
 import { Context, type Next } from 'hono'
 import { every } from 'hono/combine';
+import { type AuthUser } from '@/src/types/prisma';
 
 /* Constant values */
 export const apiPort: number = +(process.env.API_PORT ?? 8080);
@@ -17,27 +18,29 @@ export const comparePassword = async (password: string, hash: string) => { retur
 
 /* JWT helpers */
 export const generateToken = async (user: any) => {
-    const payload = {
-        sub: user.id,
-        username: user.username,
-        role: user.role,
-        exp: Math.floor(Date.now() / 1000) + 60 * 60, // Set 1 Hour Expiry on token
-        tokenVersion: user.tokenVersion,
-    }
+  const payload = {
+    sub: user.id,
+    username: user.username,
+    disabled: user.disabled,
+    role: user.role,
+    exp: Math.floor(Date.now() / 1000) + 60 * 60, // Set 1 Hour Expiry on token
+    tokenVersion: user.tokenVersion,
+  }
 
-    return await sign(payload, JWT_SECRET, 'HS256');
+  return await sign(payload, JWT_SECRET, 'HS256');
 }
 
-export const generateRefreshToken = async (user: any) => {
-    const payload = {
-        sub: user.id,
-        username: user.username,
-        role: user.role,
-        exp: Math.floor(Date.now() / 1000) + 60 * 60 * 24 * 7, // Set 7 Days Expiry
-        refreshTokenVersion: user.refreshTokenVersion,
-    }
+export const generateRefreshToken = async (user: AuthUser) => {
+  const payload = {
+    sub: user.id,
+    username: user.username,
+    disabled: user.disabled,
+    role: user.role,
+    exp: Math.floor(Date.now() / 1000) + 60 * 60 * 24 * 7, // Set 7 Days Expiry
+    refreshTokenVersion: user.refreshTokenVersion,
+  }
 
-    return await sign(payload, JWT_REFRESH_SECRET, 'HS256');
+  return await sign(payload, JWT_REFRESH_SECRET, 'HS256');
 }
 
 export const verifySession = () => {
@@ -49,10 +52,15 @@ export const verifySession = () => {
     }
 
     const token = authHeader.split(' ')[1];
-    
+
     try {
       const decoded = await verify(token, JWT_SECRET, 'HS256');
       c.set('user', decoded);
+
+      if (decoded.disabled) {
+        return c.json({ success: false, message: "Invalid credentials." }, 401);
+      }
+
       await next();
     } catch (error) {
       return c.json({ error: "Unauthorized: Token is invalid or expired" }, 401);
@@ -61,6 +69,7 @@ export const verifySession = () => {
 };
 
 export const checkRole = (allowedRole: string) => {
+
   return async (c: Context, next: Next) => {
     const authHeader = c.req.header('Authorization');
 
@@ -70,7 +79,7 @@ export const checkRole = (allowedRole: string) => {
 
     const token: string = authHeader.split(' ')[1];
 
-   try {
+    try {
       const payload = await verify(token, JWT_SECRET, 'HS256');
 
       if (payload.role !== allowedRole) {
@@ -81,23 +90,21 @@ export const checkRole = (allowedRole: string) => {
     } catch (error) {
       return c.json({ error: 'Session has expired' }, 401);
     }
- 
+
     await next()
   }
 }
 /* Input validators */
 export const validateInput = (required: string[]) => {
   return async (c: Context, next: Next) => {
-    const body = await c.req.json().catch(() => ({})); 
-    
+    const body = await c.req.json().catch(() => ({}));
+
     for (const key of required) {
       if (!body[key] || String(body[key]).trim() === "") {
-        // Hier breekt Hono direct af en stuurt de response.
-        // De controller wordt NIET meer uitgevoerd!
         return c.json({ error: `${key} is required` }, 400);
       }
     }
-    
+
     // Sla de body op in de context zodat de controller erbij kan
     c.set('parsedBody', body);
     await next();

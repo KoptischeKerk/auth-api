@@ -4,7 +4,7 @@ FROM ubuntu:latest AS base
 ENV NODE_VERSION=24
 ENV NEXT_TELEMETRY_DISABLED=1
 ENV DEBIAN_FRONTEND=noninteractive
-ENV ROOT_DIR=/usr/boilerplate
+ENV ROOT_DIR=/usr/authentication
 
 # Install base deps
 RUN apt-get update \
@@ -27,7 +27,7 @@ RUN chown -R node:node $ROOT_DIR
 USER node
 
 COPY --chown=node:node api/ ./
-RUN mkdir -p /usr/boilerplate/api/prisma/migrations
+RUN mkdir -p /usr/authentication/api/prisma/migrations
 
 RUN pnpm i
 
@@ -37,21 +37,4 @@ CMD ["pnpm", "run", "dev"]
 
 FROM api-base AS api-prd
 RUN pnpm prisma generate && pnpm run build
-CMD ["pnpm", "run", "start"]
-
-
-# FE Build
-FROM base AS fe-base
-WORKDIR $ROOT_DIR/fe
-RUN chown -R node:node $ROOT_DIR
-USER node
-
-COPY --chown=node:node frontend/ ./
-RUN pnpm i && mkdir -p .next
-
-FROM fe-base AS fe-dev
-CMD ["pnpm", "run", "dev"]
-
-FROM fe-base AS fe-prd
-RUN pnpm run build
 CMD ["pnpm", "run", "start"]

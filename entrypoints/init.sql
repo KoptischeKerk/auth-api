@@ -1,1 +1,1 @@
-CREATE SCHEMA IF NOT EXISTS boilerplate;
+CREATE SCHEMA IF NOT EXISTS authentication;
