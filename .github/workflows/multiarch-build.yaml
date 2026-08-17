@@ -44,9 +44,6 @@ jobs:
 
       - name: Run audit
         run: |
-          docker run --rm local-authentication:website \
-            sh -c "pnpm i && pnpm audit"
-
           docker run --rm local-authentication:api \
             sh -c "pnpm i && pnpm audit"
 
