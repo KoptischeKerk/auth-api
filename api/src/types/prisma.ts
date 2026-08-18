@@ -2,9 +2,9 @@ export interface AuthUser {
   id?: string;
   email?: string;
   username?: string;
-  name?: string | null;
-  disabled?: boolean | null;
-  role?: string | null;
+  name?: string;
+  disabled?: boolean;
+  role?: string;
   password?: string;
   tokenVersion?: number;
   refreshTokenVersion?: number;

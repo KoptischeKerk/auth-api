@@ -22,14 +22,14 @@ auth.post('/login', verifyInput(['identifier', 'password']), async (c: Context) 
   const { identifier, password } = body;
   const now = new Date();
 
-  const user: AuthUser | null = await prisma.user.findFirst({
+  const user = await prisma.user.findFirst({
     where: {
       OR: [
         { username: identifier },
         { email: identifier }
       ]
     }
-  });
+  }) as AuthUser;
 
   if (!user) {
     return c.json({ success: false, message: "Invalid credentials." }, 401);
@@ -122,7 +122,7 @@ auth.post('/refresh', async (c: Context) => {
 
     let user: AuthUser = await prisma.user.findUnique({
       where: { id: decoded.sub as string }
-    });
+    }) as AuthUser;
 
     if (!user || user.refreshTokenVersion !== decoded.refreshTokenVersion) {
       return c.json({ error: "Unauthorized: Refresh session has been revoked" }, 401);
@@ -140,7 +140,7 @@ auth.post('/refresh', async (c: Context) => {
       user = await prisma.user.update({
         where: { id: user.id },
         data: { refreshTokenVersion: { increment: 1 } }
-      });
+      }) as AuthUser;
 
       const newRefreshToken = await sign({
         sub: user.id,
@@ -154,7 +154,7 @@ auth.post('/refresh', async (c: Context) => {
     user = await prisma.user.update({
       where: { id: user.id },
       data: { tokenVersion: { increment: 1 } }
-    });
+    }) as AuthUser;
 
     const newAccessToken = await sign({
       sub: user.id,
@@ -209,7 +209,7 @@ auth.post('/register', verifyInput(['username', 'email', 'password', 'name']), a
         login_timeout_untill: null,
         last_blocked_at: null,
       }
-    });
+    }) as AuthUser;
 
     const token = await generateToken(newUser);
     const refreshToken = await generateRefreshToken(newUser);
