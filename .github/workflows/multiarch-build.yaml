@@ -1,4 +1,4 @@
-name: Build Portfolio Multiarch
+name: Build AuthAPI Multiarch
 
 permissions:
   contents: read

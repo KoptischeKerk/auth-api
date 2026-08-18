@@ -1,4 +1,4 @@
-name: Build website
+name: Build AuthAPI
 
 permissions:
   contents: read
