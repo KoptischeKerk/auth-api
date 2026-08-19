@@ -106,7 +106,7 @@ auth.get('/me', verifyJWT(), async (c: Context) => {
   const user: AccessTokenPayload = c.get('user');
   const refresh = (user.exp - Math.floor(Date.now() / 1000)) < (10 * 60);
 
-  return c.json({ valid: true, role: user.role, refresh }, 200)
+  return c.json({ valid: true, role: user.role, name: user.name, refresh }, 200)
 });
 
 auth.post('/refresh', async (c: Context) => {
@@ -114,7 +114,7 @@ auth.post('/refresh', async (c: Context) => {
   const { refreshToken } = body;
 
   if (!refreshToken) {
-    return c.json({ error: "Refresh token is required" }, 400);
+    return c.json({ success: false, error: "Refresh token is required" }, 400);
   }
 
   try {
@@ -173,7 +173,7 @@ auth.post('/refresh', async (c: Context) => {
     }, 200);
 
   } catch (error) {
-    return c.json({ error: "Unauthorized: Refresh token is invalid or expired" }, 401);
+    return c.json({ success: false, error: "Unauthorized: Refresh token is invalid or expired" }, 401);
   }
 });
 
@@ -221,5 +221,58 @@ auth.post('/register', verifyInput(['username', 'email', 'password', 'name']), a
   }
 });
 
+auth.post('/picture', verifyJWT(), async (c: Context) => {
+  const user = c.get('user') as AccessTokenPayload;
+  const body = await c.req.parseBody();
+  const file = body['image'];
+
+  if (!file || !(file instanceof File)) {
+    return c.json({ success: false, error: 'No valid file uploaded' }, 400);
+  }
+
+  const MAX_SIZE = 4 * 1024 * 1024;
+  if (file.size > MAX_SIZE) {
+    const sizeInMB = (file.size / (1024 * 1024)).toFixed(2);
+    return c.json({ success: false, error: `File is too large. Maximum 4MB allowed. (${sizeInMB}MB)` }, 400);
+  }
+
+  try {
+    const arrayBuffer = await file.arrayBuffer();
+    const buffer = Buffer.from(arrayBuffer);
+
+    await prisma.user.update({
+      where: { id: user.sub },
+      data: { picture: buffer },
+    });
+
+    return c.json({ success: true, message: 'Profile picture updated successfully' }, 200);
+  } catch (error) {
+    return c.json({ success: false, error: 'Failed to save profile picture' }, 500);
+  }
+});
+
+auth.get('/picture', verifyJWT(), async (c: Context) => {
+  const user = c.get('user') as AccessTokenPayload;
+
+  try {
+    const dbUser = await prisma.user.findUnique({
+      where: { id: user.sub },
+      select: { picture: true },
+    }) as AuthUser;
+
+    if (!dbUser || !dbUser.picture) {
+      return c.json({ success: false, error: 'Profile picture not found' }, 404);
+    }
+
+    const imageArray = new Uint8Array(dbUser.picture);
+
+    return c.body(imageArray, 200, {
+      'Content-Type': 'image/jpeg',
+      'Cache-Control': 'public, max-age=86400',
+    });
+  } catch (error) {
+    return c.json({ success: false, error: 'Failed to retrieve profile picture' }, 500);
+  }
+});
 
 export default auth;

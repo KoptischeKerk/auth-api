@@ -5,6 +5,7 @@ export interface AuthUser {
   name?: string;
   disabled?: boolean;
   role?: string;
+  picture?: Buffer | null;
   password?: string;
   tokenVersion?: number;
   refreshTokenVersion?: number;

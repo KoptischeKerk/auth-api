@@ -22,6 +22,7 @@ export const generateToken = async (user: any) => {
     sub: user.id,
     username: user.username,
     disabled: user.disabled,
+    name: user.name,
     role: user.role,
     exp: Math.floor(Date.now() / 1000) + 60 * 60, // Set 1 Hour Expiry on token
     tokenVersion: user.tokenVersion,
@@ -35,6 +36,7 @@ export const generateRefreshToken = async (user: AuthUser) => {
     sub: user.id,
     username: user.username,
     disabled: user.disabled,
+    name: user.name,
     role: user.role,
     exp: Math.floor(Date.now() / 1000) + 60 * 60 * 24 * 7, // Set 7 Days Expiry
     refreshTokenVersion: user.refreshTokenVersion,
@@ -48,7 +50,7 @@ export const verifySession = () => {
     const authHeader = c.req.header('Authorization');
 
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      return c.json({ error: "Unauthorized: Missing or invalid token format" }, 401);
+      return c.json({ success: false, error: "Unauthorized: Missing or invalid token format" }, 401);
     }
 
     const token = authHeader.split(' ')[1];
@@ -83,12 +85,12 @@ export const checkRole = (allowedRole: string) => {
       const payload = await verify(token, JWT_SECRET, 'HS256');
 
       if (payload.role !== allowedRole) {
-        return c.json({ error: `Access denied` }, 403);
+        return c.json({ success: false, error: `Access denied` }, 403);
       }
 
       await next();
     } catch (error) {
-      return c.json({ error: 'Session has expired' }, 401);
+      return c.json({ success: false, error: 'Session has expired' }, 401);
     }
 
     await next()
@@ -101,7 +103,7 @@ export const validateInput = (required: string[]) => {
 
     for (const key of required) {
       if (!body[key] || String(body[key]).trim() === "") {
-        return c.json({ error: `${key} is required` }, 400);
+        return c.json({ success: false, error: `${key} is required` }, 400);
       }
     }
 

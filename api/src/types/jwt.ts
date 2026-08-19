@@ -2,6 +2,7 @@
 interface BaseJWTPayload {
   sub: string;         // user.id (cuid)
   username: string;
+  name: string,
   role: string | null;
   exp: number;         // expiration timestamp
 }

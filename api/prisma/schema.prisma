@@ -16,6 +16,7 @@ model User {
   disabled  Boolean         @default(false)
   role      String?         @default("user")
   password  String
+  picture   Bytes?
   tokenVersion Int          @default(0)
   refreshTokenVersion Int   @default(0)
   failed_login_tries Int    @default(0)
