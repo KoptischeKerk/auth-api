@@ -18,18 +18,18 @@
   },
   "dependencies": {
     "@hono/node-server": "^2.1.1",
-    "@prisma/adapter-pg": "^7.9.1",
-    "@prisma/client": "^7.9.1",
+    "@prisma/adapter-pg": "^7.10.0",
+    "@prisma/client": "^7.10.0",
     "bcrypt": "^6.0.0",
     "dotenv": "^17.4.2",
-    "hono": "^4.13.2"
+    "hono": "^4.13.7"
   },
   "devDependencies": {
     "@types/bcrypt": "^6.0.0",
     "@types/node": "^20.19.43",
-    "prisma": "^7.9.1",
+    "prisma": "^7.10.0",
     "tsup": "^8.5.1",
-    "tsx": "^4.23.12",
+    "tsx": "^4.23.13",
     "typescript": "^5.9.3"
   }
 }
